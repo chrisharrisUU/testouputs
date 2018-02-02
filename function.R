@@ -35,23 +35,68 @@ testoutputs <- function(output) {
       dfreedom <- round(output$Df[i], 2)
       testvalue <- round(output$`F value`[i], 2)
       if (output$`Pr(>F)`[i] < 0.001) {
-        psign <- "<"
+        psign <- "< "
         pvalue <- 0.001
       } else {
-        psign <- "="
+        psign <- "= "
         pvalue <- round(output$`Pr(>F)`[i], 2)
       }
       eta2 <- round(output$`Sum Sq`[i] / sum(output$`Sum Sq`), 2) # Output is eta squared, not partial
-      results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", p ", psign, " ", pvalue, ", p.eta^2 = ", eta2, "\n", sep = "")
+      results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", p ", psign, pvalue, ", p.eta^2 = ", eta2, "\n", sep = "")
     }
   } else if ("call" %in% names(output)) { # Regression
-    results <- vector(mode = "character", length = length(output$df))
+    # To DO
+    # Are df correct?
+    # transform b coefficients to beta coefficients 
+    dfreedom <- output$df[2]
+    results <- vector(mode = "character", length = length(output$aliased) + 2)
     results[1] <- paste("Regression:",
                         dimnames(attributes(output$terms)$factors)[[1]][1],
                         "~",
                         paste(dimnames(attributes(output$terms)$factors)[[2]], collapse = " + "),
                         "\n",
                         sep = " ")
+    if (output$coefficients[1, 4] < 0.001) {
+      psign <- "< "
+      pvalue <- 0.001
+    } else {
+      psign <- "= "
+      pvalue <- round(output$coefficients[1, 4], 2)
+    }
+    results[2] <- paste("Overall: Adj_R_squared = ",
+                       round(output$adj.r.squared, 2),
+                       ", F(",
+                       output$df[1] - 1,
+                       ", ",
+                       dfreedom,
+                       ") = ",
+                       round(output$fstatistic[1], 2),
+                       ", p ",
+                       psign,
+                       pvalue,
+                       "\n",
+                       sep = "")
+    for (i in 1 : length(output$aliased)) {
+      if (output$coefficients[i, 4] < 0.001) {
+        psign <- "< "
+        pvalue <- 0.001
+      } else {
+        psign <- "= "
+        pvalue <- round(output$coefficients[i, 4], 2)
+      }
+      results[i + 2] <- paste(dimnames(output$coefficients)[[1]][i],
+            ": b = ",
+            round(output$coefficients[i, 1], 2),
+            ", t(",
+            dfreedom,
+            ") = ",
+            round(output$coefficients[i, 3], 2),
+            ", p ",
+            psign,
+            pvalue,
+            "\n",
+            sep = "")
+    }
   } else { # Exit with "not-supported" message
     results <- "Your statistical test is currently not supported by this function."
   }
