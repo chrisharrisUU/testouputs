@@ -12,6 +12,10 @@ iris %>%
   filter(Species %in% c("setosa", "versicolor")) %$%
   t.test(Sepal.Length ~ Species) %>%
   testoutputs
+iris %>%
+  filter(Species %in% c("setosa", "versicolor")) %$%
+  t.test(Sepal.Length ~ Species) %>%
+  testoutputs(FALSE)
 
 ## ANOVA----
 
