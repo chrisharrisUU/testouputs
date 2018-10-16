@@ -1,22 +1,29 @@
 # Load dependencies
-if (!require(needs)) {install.packages("needs"); library(needs)}
-needs(dplyr, magrittr)
+if (!require(dplyr)) {install.packages("dplyr"); library(dplyr)}
+if (!require(magrittr)) {install.packages("magrittr"); library(magrittr)}
 
 # The Function
-testoutputs <- function(output, print = TRUE) {
+testoutputs <- function(output, varname = NA, print = TRUE) {
   if ("statistic" %in% names(output)) { # T test
     kind <- "t"
     results <- vector(mode = "character", length = 2)
-    results[1] <- paste("T-test: ", output$data.name, "\n")
+    if (is.na(varname)) {
+      results[1] <- paste("T-test: ", output$data.name, "\n")
+    } else {
+      results[1] <- paste("T-test: ", varname, "\n")
+    }
     dfreedom <- round(output$parameter, 2)
     testvalue <- round(output$statistic, 2)
     pvalue <- output$p.value
-    if (output$p.value < 0.001) {
+    if (testvalue < 0) {
+      pvalue <- 1 - pvalue
+    }
+    if (pvalue < 0.001) {
       psign <- "<"
       pvalue <- 0.001
     } else {
       psign <- "="
-      pvalue <- round(output$p.value, 3)
+      pvalue <- round(pvalue, 3)
     }
     cohensd <- round((2 * output$statistic) / sqrt(output$parameter), 2)
     if (print) {
@@ -52,7 +59,7 @@ testoutputs <- function(output, print = TRUE) {
         results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", p ", psign, " ", pvalue, ", eta^2 = ", eta2, "\n", sep = "")
       } else {
         kind <- "*F*"
-        results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", *p* ", psign, " ", pvalue, ", *&eta;^2^* = ", eta2, "\n", sep = "")
+        results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", *p* ", psign, " ", pvalue, ", *eta^2^* = ", eta2, "\n", sep = "")
       }
     }
   } else if ("call" %in% names(output)) { # Regression
@@ -146,6 +153,7 @@ testoutputs <- function(output, print = TRUE) {
     for (i in 1 : length(results)) {
       cat(results[i])
     }
+    cat("\n")
   } else {
     return(results)
   }
