@@ -12,10 +12,16 @@ iris %>%
   filter(Species %in% c("setosa", "versicolor")) %$%
   t.test(Sepal.Length ~ Species) %>%
   testoutputs
+# Intext version for RMarkdown
 iris %>%
   filter(Species %in% c("setosa", "versicolor")) %$%
   t.test(Sepal.Length ~ Species) %>%
-  testoutputs(FALSE)
+  testoutputs(print = FALSE)
+# Include extra information (e.g. subgroup) for reporting
+iris %>%
+  filter(Species == "setosa") %$%
+  t.test(Sepal.Length, mu = 4.9, alternative = "greater") %>%
+  testoutputs(varname = "Setosa")
 
 ## ANOVA----
 
@@ -27,36 +33,36 @@ iris %$%
 iris %$%
   lm(Sepal.Length ~ Species) %>%
   anova %>%
-  testoutputs
+  testoutputs()
 
 # Standard output for multiple factors
 iris %$%
-  lm(Sepal.Length ~ Species + Petal.Width) %>%
-  anova
+  lm(Sepal.Length ~ Species + Sepal.Width) %>%
+  anova()
 # APAish output for multiple factors
 iris %$%
-  lm(Sepal.Length ~ Species + Petal.Width) %>%
-  anova %>%
-  testoutputs
+  lm(Sepal.Length ~ Species + Sepal.Width) %>%
+  anova() %>%
+  testoutputs()
 
 # Standard output for multiple factors
 iris %$%
-  lm(Sepal.Length ~ Species * Petal.Width) %>%
+  lm(Petal.Length ~ Species * Petal.Width) %>%
   anova
 # APAish output for multiple factors
 iris %$%
-  lm(Sepal.Length ~ Species * Petal.Width) %>%
-  anova %>%
-  testoutputs
+  lm(Petal.Length ~ Species * Petal.Width) %>%
+  anova() %>%
+  testoutputs()
 
 ## Regression----
 
 # Standard output for multiple factors
 iris %$%
-  lm(Sepal.Length ~ Species * Petal.Width) %>%
-  summary
+  lm(Petal.Length ~ Species * Petal.Width) %>%
+  summary()
 # APAish output for multiple factors
 iris %$%
-  lm(Sepal.Length ~ Species * Petal.Width) %>%
-  summary %>%
-  testoutputs
+  lm(Petal.Length ~ Species * Petal.Width) %>%
+  summary() %>%
+  testoutputs()
