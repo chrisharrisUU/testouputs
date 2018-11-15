@@ -1,8 +1,10 @@
 # Load dependencies
 if (!require(dplyr)) {install.packages("dplyr"); library(dplyr)}
+if (!require(papaja)) {install.packages("papaja"); library(papaja)}
 if (!require(magrittr)) {install.packages("magrittr"); library(magrittr)}
+if (!require(BayesFactor)) {install.packages("BayesFactor"); library(BayesFactor)}
 
-# The Function
+# Frequentist tests
 testoutputs <- function(output, varname = NA, print = TRUE) {
   if ("statistic" %in% names(output)) { # T test
     kind <- "t"
@@ -63,9 +65,6 @@ testoutputs <- function(output, varname = NA, print = TRUE) {
       }
     }
   } else if ("call" %in% names(output)) { # Regression
-    # To DO
-    # Are df correct?
-    # transform b coefficients to beta coefficients 
     dfreedom <- output$df[2]
     results <- vector(mode = "character", length = length(output$aliased) + 2)
     results[1] <- paste("Regression:",
@@ -157,4 +156,51 @@ testoutputs <- function(output, varname = NA, print = TRUE) {
   } else {
     return(results)
   }
+}
+
+# BayesFactor T-Test
+# Adapted from Tobias Heycke https://osf.io/q5eak/
+printBFt <- function(BF, index = 1, postit = 100000, print = FALSE) {
+  test_dir <- rownames(BF@bayesFactor)[1] %>%
+    substr(., 15, nchar(.))
+  b <- as.vector(BF[index])
+  if (test_dir == "-Inf<d<0") {
+    h <- "-0"
+  } else if (test_dir == "0<d<Inf") {
+    h <- "+0"
+  } else {
+    if (as.vector(BF[index]) < 1) {
+      b <- 1 / b
+      h <- "01"
+    } else {
+      h <- "10"
+    }
+  }
+  
+  s <- " = "
+  if (b > 1000000) {
+    b <- 1000000
+    s <- " > "
+  }
+  
+  if (as.character(class(BF@numerator[[names(BF@numerator)[index]]])) == "BFoneSample") { 
+    rBF <- BayesFactor::ttestBF(BF@data[,1],
+                                mu = BF@numerator[[names(BF@numerator)[index]]]@prior$mu,
+                                rscale = BF@numerator[[names(BF@numerator)[index]]]@prior$rscale)
+  }
+  
+  if (as.character(class(BF@numerator[[names(BF@numerator)[1]]])) == "BFindepSample") { 
+    rBF <- BayesFactor::ttestBF(subset(BF@data,
+                                       BF@data[,2] == "x")[,1] ,
+                                subset(BF@data,
+                                       BF@data[,2] == "y")[,1],
+                                rscale = BF@numerator[[names(BF@numerator)[index]]]@prior$rscale,
+                                paired = FALSE)
+  }
+  post <- BayesFactor::posterior(rBF, index = index, iterations = postit)
+  d <- median(post[, "delta"])
+  HDI <- coda::HPDinterval(post[, "delta"])
+  ifelse(print,
+         paste0('*BF~', h, '~*', s, printnum(b), ', ', '*d* = ', printnum(d), ', ', '*95% HDI* [', printnum(HDI[1]), ', ', printnum(HDI[2]), ']'),
+         paste0('BF', h, s, printnum(b), ', ', 'd = ', printnum(d), ', ', '95% HDI [', printnum(HDI[1]), ', ', printnum(HDI[2]), ']'))
 }
