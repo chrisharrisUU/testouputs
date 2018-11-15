@@ -5,16 +5,19 @@ source("function.R")
 
 # Standard output
 iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %$%
+  filter(Species %in% c("setosa", "versicolor")) %>%
+  mutate(Species = factor(Species, levels = c("versicolor", "setosa"))) %$%
   t.test(Sepal.Length ~ Species)
 # APAish output
 iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %$%
+  filter(Species %in% c("setosa", "versicolor")) %>%
+  mutate(Species = factor(Species, levels = c("versicolor", "setosa"))) %$%
   t.test(Sepal.Length ~ Species) %>%
   testoutputs
 # Intext version for RMarkdown
 iris %>%
-  filter(Species %in% c("setosa", "versicolor")) %$%
+  filter(Species %in% c("setosa", "versicolor")) %>%
+  mutate(Species = factor(Species, levels = c("versicolor", "setosa"))) %$%
   t.test(Sepal.Length ~ Species) %>%
   testoutputs(print = FALSE)
 # Include extra information (e.g. subgroup) for reporting
@@ -66,3 +69,21 @@ iris %$%
   lm(Petal.Length ~ Species * Petal.Width) %>%
   summary() %>%
   testoutputs()
+
+## Bayesian T-Test----
+
+# APAish output
+ttestBF(
+  subset(iris,
+         Species == "setosa")$Sepal.Length,
+  mu = 4.9,
+  nullInterval = c(0, Inf)
+) %>% printBFt()
+
+# Intext version for RMarkdown
+ttestBF(
+  subset(iris,
+         Species == "setosa")$Sepal.Length,
+  mu = 4.9,
+  nullInterval = c(0, Inf)
+) %>% printBFt(print = TRUE)
