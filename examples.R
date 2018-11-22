@@ -87,3 +87,16 @@ ttestBF(
   mu = 4.9,
   nullInterval = c(0, Inf)
 ) %>% printBFt(print = TRUE)
+
+## Bayesian binominal test----
+# Distribution
+distr <- iris %>%
+  filter(Species != "setosa") %>%
+  mutate(bin_Spl_lgth = ifelse(Sepal.Length > median(Sepal.Length), 1, 0)) %$%
+  table(Species, bin_Spl_lgth)
+proportionBF(y = distr["versicolor", "0"],
+             N = distr["versicolor", "1"] + distr["versicolor","0"],
+             p = .5,
+             rscale = "ultrawide",
+             nullInterval = c(.5, 1)) %>%
+  printBFb(print = F)
