@@ -45,7 +45,7 @@ testoutputs <- function(output, varname = NA, print = TRUE) {
                           sub(", Residuals", "", .),
                         "\n",
                         sep = " ")
-    for (i in 1 : (length(output$Df) - 1)) {
+    for (i in 1:(length(output$Df) - 1)) {
       dfreedom <- round(output$Df[i], 2)
       testvalue <- round(output$`F value`[i], 2)
       if (output$`Pr(>F)`[i] < 0.001) {
@@ -109,7 +109,7 @@ testoutputs <- function(output, varname = NA, print = TRUE) {
                           "\n",
                           sep = "")
     }
-    for (i in 1 : length(output$aliased)) {
+    for (i in 1:length(output$aliased)) {
       if (output$coefficients[i, 4] < 0.001) {
         psign <- "< "
         pvalue <- 0.001
@@ -145,11 +145,11 @@ testoutputs <- function(output, varname = NA, print = TRUE) {
                                 sep = "")
       }
     }
-  } else { # Exit with "not-supported" message
+  } else {# Exit with "not-supported" message
     results <- "Your statistical test is currently not supported by this function."
   }
   if (print) {
-    for (i in 1 : length(results)) {
+    for (i in 1:length(results)) {
       cat(results[i])
     }
     cat("\n")
@@ -206,6 +206,25 @@ printBFt <- function(BF, index = 1, postit = 100000, print = FALSE) {
 }
 
 # Bayesfactor Binominal test
-printBFb <- function(BF) {
-  as.vector(BF[1])
+printBFb <- function(BF, print = TRUE) {
+  b <- as.vector(BF[1])
+  
+  test_dir <- rownames(BF@bayesFactor)[1] %>%
+    substr(., 15, nchar(.))
+  if (test_dir == "-Inf<d<0") {
+    h <- "-0"
+  } else if (test_dir == "0<d<Inf") {
+    h <- "+0"
+  } else {
+    if (b < 1) {
+      b <- 1 / b
+      h <- "01"
+    } else {
+      h <- "10"
+    }
+  }
+  ifelse(print,
+         paste0('*BF~', h, '~*', " = ", printnum(b)),
+         paste0('BF', h, " = ", printnum(b)))
+  
 }
