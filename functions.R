@@ -210,10 +210,12 @@ printBFb <- function(BF, print = TRUE) {
   b <- as.vector(BF[1])
   
   test_dir <- rownames(BF@bayesFactor)[1] %>%
-    substr(., 15, nchar(.))
-  if (test_dir == "-Inf<d<0") {
+    substr(.,
+           gregexpr("r=", .)[[1]][1] + 3,
+           nchar(.))
+  if (test_dir == "0<d<0.5") {
     h <- "-0"
-  } else if (test_dir == "0<d<Inf") {
+  } else if (test_dir == "0.5<d<1") {
     h <- "+0"
   } else {
     if (b < 1) {
