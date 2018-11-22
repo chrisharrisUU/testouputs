@@ -211,7 +211,7 @@ printBFb <- function(BF, print = TRUE) {
   
   test_dir <- rownames(BF@bayesFactor)[1] %>%
     substr(.,
-           gregexpr("r=", .)[[1]][1] + 3,
+           gregexpr("r=", .)[[1]][1] + 4,
            nchar(.))
   if (test_dir == "0<p<0.5") {
     h <- "-0"
