@@ -213,9 +213,9 @@ printBFb <- function(BF, print = TRUE) {
     substr(.,
            gregexpr("r=", .)[[1]][1] + 3,
            nchar(.))
-  if (test_dir == "0<d<0.5") {
+  if (test_dir == "0<p<0.5") {
     h <- "-0"
-  } else if (test_dir == "0.5<d<1") {
+  } else if (test_dir == "0.5<p<1") {
     h <- "+0"
   } else {
     if (b < 1) {
