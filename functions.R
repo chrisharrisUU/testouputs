@@ -204,3 +204,8 @@ printBFt <- function(BF, index = 1, postit = 100000, print = FALSE) {
          paste0('*BF~', h, '~*', s, printnum(b), ', ', '*d* = ', printnum(d), ', ', '*95% HDI* [', printnum(HDI[1]), ', ', printnum(HDI[2]), ']'),
          paste0('BF', h, s, printnum(b), ', ', 'd = ', printnum(d), ', ', '95% HDI [', printnum(HDI[1]), ', ', printnum(HDI[2]), ']'))
 }
+
+# Bayesfactor Binominal test
+printBFb <- function(BF) {
+  as.vector(BF[1])
+}
