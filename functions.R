@@ -215,7 +215,7 @@ printBFt <- function(BF, index = 1, postit = 100000, print = FALSE, dir = NA) {
 }
 
 # Bayesfactor Binominal test
-printBFb <- function(BF, print = TRUE) {
+printBFb <- function(BF, print = FALSE) {
   b <- as.vector(BF[1])
   
   test_dir <- rownames(BF@bayesFactor)[1] %>%
