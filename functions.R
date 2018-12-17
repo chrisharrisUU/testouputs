@@ -160,7 +160,7 @@ testoutputs <- function(output, varname = NA, print = TRUE) {
 
 # BayesFactor T-Test
 # Adapted from Tobias Heycke https://osf.io/q5eak/
-printBFt <- function(BF, index = 1, postit = 100000, print = FALSE) {
+printBFt <- function(BF, index = 1, postit = 100000, print = FALSE, dir = NA) {
   test_dir <- rownames(BF@bayesFactor)[1] %>%
     substr(., 15, nchar(.))
   b <- as.vector(BF[index])
@@ -169,11 +169,20 @@ printBFt <- function(BF, index = 1, postit = 100000, print = FALSE) {
   } else if (test_dir == "0<d<Inf") {
     h <- "+0"
   } else {
-    if (as.vector(BF[index]) < 1) {
-      b <- 1 / b
-      h <- "01"
+    if (is.na(dir)) {
+      if (as.vector(BF[index]) < 1) {
+        b <- 1 / b
+        h <- "01"
+      } else {
+        h <- "10"
+      }
     } else {
-      h <- "10"
+      if (dir == "10") {
+        h <- "10"
+      } else {
+        b <- 1 / b
+        h <- "01"
+      }
     }
   }
   
