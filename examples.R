@@ -1,5 +1,5 @@
 ### Provide examples of regular output compared to output by the testoutput-function
-source("function.R")
+source("functions.R")
 
 ## T-Test----
 
