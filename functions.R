@@ -199,13 +199,22 @@ printBFt <- function(BF, index = 1, postit = 100000, print = FALSE, dir = NA) {
   }
   
   if (as.character(class(BF@numerator[[names(BF@numerator)[1]]])) == "BFindepSample") { 
-    rBF <- BayesFactor::ttestBF(subset(BF@data,
-                                       BF@data[,2] == "x")[,1] ,
-                                subset(BF@data,
-                                       BF@data[,2] == "y")[,1],
-                                rscale = BF@numerator[[names(BF@numerator)[index]]]@prior$rscale,
-                                paired = FALSE)
+    if (BF@numerator[[names(BF@numerator)[index]]]@identifier$formula == "y ~ group") {
+      rBF <- BayesFactor::ttestBF(subset(BF@data,
+                                         BF@data[,2] == "x")[,1] ,
+                                  subset(BF@data,
+                                         BF@data[,2] == "y")[,1],
+                                  rscale = BF@numerator[[names(BF@numerator)[index]]]@prior$rscale,
+                                  paired = FALSE)
+    } else {
+      form <- BF@numerator[[names(BF@numerator)[index]]]@identifier$formula
+      rBF <- BayesFactor::ttestBF(data = BF@data,
+                                  formula = eval(parse(text = form)),
+                                  rscale = BF@numerator[[names(BF@numerator)[index]]]@prior$rscale,
+                                  paired = FALSE)
+    }
   }
+  
   post <- BayesFactor::posterior(rBF, index = index, iterations = postit)
   d <- median(post[, "delta"])
   HDI <- coda::HPDinterval(post[, "delta"])
