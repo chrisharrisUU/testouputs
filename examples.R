@@ -73,6 +73,12 @@ iris %$%
 ## Bayesian T-Test----
 
 # APAish output
+iris %>%
+  filter(Species == "setosa") %$%
+  ttestBF(x = Sepal.Length,
+          mu = 4.9,
+          nullInterval = c(0, Inf)
+  ) %>% printBFt()
 ttestBF(
   subset(iris,
          Species == "setosa")$Sepal.Length,
@@ -87,6 +93,14 @@ ttestBF(
   mu = 4.9,
   nullInterval = c(0, Inf)
 ) %>% printBFt(print = TRUE)
+
+# Using formula
+iris %>%
+  filter(Species %in% c("setosa", "virginica")) %>%
+  as.data.frame() %>%
+  ttestBF(data = .,
+          formula = Sepal.Width ~ Species) %>%
+  printBFt()
 
 ## Bayesian binominal test----
 # Distribution
