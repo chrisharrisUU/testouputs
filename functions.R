@@ -3,159 +3,90 @@ if (!require(dplyr)) {install.packages("dplyr"); library(dplyr)}
 if (!require(papaja)) {install.packages("papaja"); library(papaja)}
 if (!require(magrittr)) {install.packages("magrittr"); library(magrittr)}
 if (!require(BayesFactor)) {install.packages("BayesFactor"); library(BayesFactor)}
+if (!require(rlang)) {install.packages("rlang"); library(rlang)}
 
-# Frequentist tests
-testoutputs <- function(output, varname = NA, print = TRUE) {
-  if ("statistic" %in% names(output)) { # T test
-    kind <- "t"
-    results <- vector(mode = "character", length = 2)
-    if (is.na(varname)) {
-      results[1] <- paste("T-test: ", output$data.name, "\n")
-    } else {
-      results[1] <- paste("T-test: ", varname, "\n")
-    }
-    dfreedom <- round(output$parameter, 2)
-    testvalue <- round(output$statistic, 2)
-    pvalue <- output$p.value
-    if (testvalue < 0) {
-      pvalue <- 1 - pvalue
-    }
-    if (pvalue < 0.001) {
-      psign <- "<"
-      pvalue <- 0.001
-    } else {
-      psign <- "="
-      pvalue <- round(pvalue, 3)
-    }
-    cohensd <- round((2 * output$statistic) / sqrt(output$parameter), 2)
-    if (print) {
-      results[2] <- paste(kind, "(", dfreedom, ")", " = ", testvalue, ", p ", psign, " ", pvalue, ", d = ", cohensd, sep = "")
-    } else {
-      kind <- "*t*"
-      results <- paste(kind, "(", dfreedom, ")", " = ", testvalue, ", *p* ", psign, " ", pvalue, ", *d* = ", cohensd, sep = "")
-    }
-  } else if ("F value" %in% colnames(output)) { # ANOVA
-    kind <- "F"
-    results <- vector(mode = "character", length = length(output$Df))
-    results[1] <- paste("ANOVA:",
-                        attributes(output)$heading[2] %>%
-                          sub("Response: ", "", .),
-                        "~",
-                        paste(attributes(output)$row.names, collapse = " + ") %>%
-                          sub(", Residuals", "", .),
-                        "\n",
-                        sep = " ")
-    for (i in 1:(length(output$Df) - 1)) {
-      dfreedom <- round(output$Df[i], 2)
-      testvalue <- round(output$`F value`[i], 2)
-      if (output$`Pr(>F)`[i] < 0.001) {
-        psign <- "< "
-        pvalue <- 0.001
-      } else {
-        psign <- "= "
-        pvalue <- round(output$`Pr(>F)`[i], 2)
-      }
-      eta2 <- round(output$`Sum Sq`[i] / sum(output$`Sum Sq`), 2) # Output is eta squared, not partial
-      results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", p ", psign, pvalue, ", eta^2 = ", eta2, "\n", sep = "")
-      if (print) {
-        results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", p ", psign, " ", pvalue, ", eta^2 = ", eta2, "\n", sep = "")
-      } else {
-        kind <- "*F*"
-        results[i + 1] <- paste(attributes(output)$row.names[i], ": ", kind, "(", dfreedom, ", ", output$Df[length(output$Df)], ")", " = ", testvalue, ", *p* ", psign, " ", pvalue, ", *eta^2^* = ", eta2, "\n", sep = "")
-      }
-    }
-  } else if ("call" %in% names(output)) { # Regression
-    dfreedom <- output$df[2]
-    results <- vector(mode = "character", length = length(output$aliased) + 2)
-    results[1] <- paste("Regression:",
-                        dimnames(attributes(output$terms)$factors)[[1]][1],
-                        "~",
-                        paste(dimnames(attributes(output$terms)$factors)[[2]], collapse = " + "),
-                        "\n",
-                        sep = " ")
-    if (output$coefficients[1, 4] < 0.001) {
-      psign <- "< "
-      pvalue <- 0.001
-    } else {
-      psign <- "= "
-      pvalue <- round(output$coefficients[1, 4], 2)
-    }
-    if (print) {
-      results[2] <- paste("Overall: Adj_R_squared = ",
-                          round(output$adj.r.squared, 2),
-                          ", F(",
-                          output$df[1] - 1,
-                          ", ",
-                          dfreedom,
-                          ") = ",
-                          round(output$fstatistic[1], 2),
-                          ", p ",
-                          psign,
-                          pvalue,
-                          "\n",
-                          sep = "")
-    } else {
-      results[2] <- paste("Overall: Adj_R_squared = ",
-                          round(output$adj.r.squared, 2),
-                          ", *F*(",
-                          output$df[1] - 1,
-                          ", ",
-                          dfreedom,
-                          ") = ",
-                          round(output$fstatistic[1], 2),
-                          ", *p* ",
-                          psign,
-                          pvalue,
-                          "\n",
-                          sep = "")
-    }
-    for (i in 1:length(output$aliased)) {
-      if (output$coefficients[i, 4] < 0.001) {
-        psign <- "< "
-        pvalue <- 0.001
-      } else {
-        psign <- "= "
-        pvalue <- round(output$coefficients[i, 4], 2)
-      }
-      if (print) {
-        results[i + 2] <- paste(dimnames(output$coefficients)[[1]][i],
-                                ": b = ",
-                                round(output$coefficients[i, 1], 2),
-                                ", t(",
-                                dfreedom,
-                                ") = ",
-                                round(output$coefficients[i, 3], 2),
-                                ", p ",
-                                psign,
-                                pvalue,
-                                "\n",
-                                sep = "")
-      } else {
-        results[i + 2] <- paste(dimnames(output$coefficients)[[1]][i],
-                                ": b = ",
-                                round(output$coefficients[i, 1], 2),
-                                ", *t*(",
-                                dfreedom,
-                                ") = ",
-                                round(output$coefficients[i, 3], 2),
-                                ", *p* ",
-                                psign,
-                                pvalue,
-                                "\n",
-                                sep = "")
-      }
-    }
-  } else {# Exit with "not-supported" message
-    results <- "Your statistical test is currently not supported by this function."
-  }
-  if (print) {
-    for (i in 1:length(results)) {
-      cat(results[i])
-    }
-    cat("\n")
+# Frequentist t-tests
+ttest <- function(data, x, y, mu = NA, sub = NA, dir = "two.sided") {
+  # Quotations
+  x_en <- enexpr(x)
+  y_en <- enexpr(y)
+  sub_en <- enexpr(sub)
+  
+  
+  # Tests
+  if (is.na(mu)) {
+    # Independent two sample t-test
+    output <- t.test(eval(parse(text = y_en)) ~ eval(parse(text = x_en)), alternative = dir, data = data)
   } else {
-    return(results)
+    if (is.na(sub)) {
+      # Independent one sample t-test
+      output <- data %$%
+        t.test(eval(parse(text = y_en)), mu = mu, alternative = dir)
+    } else {
+      # Independent one sample t-test: subgroup
+      output <- data %>%
+        filter(!!x_en == !!sub_en) %$%
+        t.test(eval(parse(text = y_en)), mu = mu, alternative = dir)
+    }
   }
+  
+  # Effect size
+  if (is.na(mu)) {
+    # Independent two sample t-test
+    output2 <- data %>%
+      group_by(!!x_en) %>%
+      mutate(diff = !!y_en - mean(!!y_en)) %>%
+      mutate(absdiff = diff ^ 2) %>%
+      summarize(sum = sum(absdiff),
+                n = n(),
+                m = mean(!!y_en))
+    sd_pooled <- sqrt((output2$sum[1] + output2$sum[2]) / (output2$n[1] + output2$n[2] - 2))
+    d <- (output2$m[1] - output2$m[2]) / sd_pooled
+    # variance = ((n1 + n2) / (n1 * n2) + d^2 / (2 * (n1 + n2 - 2))) * ((n1 + n2) / (n1 + n2 - 2))
+    # with n1, n2 being the group sizes and d being the effect size
+    v <- ((output2$n[1] + output2$n[2]) / (output2$n[1] * output2$n[2]) + (d^2) / (2 * (output2$n[1] + output2$n[2] - 2))) * ((output2$n[1] + output2$n[2]) / (output2$n[1] + output2$n[2] - 2))
+  } else {
+    if (is.na(sub)) {
+      # Independent one sample t-test
+      output2 <- data %>%
+        summarize(m = mean(!!y_en),
+                  sd = sd(!!y_en),
+                  n = n())
+    } else {
+      # Independent one sample t-test: subgroup
+      output2 <- data %>%
+        filter(!!x_en == !!sub_en) %>%
+        summarize(m = mean(!!y_en),
+                  sd = sd(!!y_en),
+                  n = n())
+    }
+    d <- (output2$m - mu) / output2$sd
+    v <- 1 / output2$n + (d^2) / (2 * output2$n)
+  }
+  
+  # Confidence interval around effect size
+  lowerCI <- d - sqrt(v) * 1.96
+  upperCI <- d + sqrt(v) * 1.96
+  
+  # Gather and format parameters
+  df <- output$parameter %>% round(., 2)
+  t <- output$statistic %>% round(., 2) %>% format(., nsmall = 2)
+  if (output$p.value < .001) {
+    p <- .001
+    sign <- " < "
+  } else {
+    p <- output$p.value %>% round(., 3) %>% format(., nsmall = 2)
+    sign <- " = "
+  }
+  p %<>% as.character() %>% substr(., 2, nchar(.))
+  conf <- output$conf.int %>% round(., 2) %>% format(., nsmall = 2)
+  d <- d %>% round(., 2) %>% format(., nsmall = 2)
+  lowerCI <- lowerCI %>% round(., 2) %>% format(., nsmall = 2)
+  upperCI <- upperCI %>% round(., 2) %>% format(., nsmall = 2)
+  # output$estimate
+  
+  # Output
+  paste0("t(", df, ") = ", t, ", p", sign, p, ", d = ", d, ", 95% CI [", lowerCI, ", ", upperCI, "]")
 }
 
 # BayesFactor T-Test
