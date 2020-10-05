@@ -39,7 +39,8 @@ ttest <- function(data, x, y, mu = NA, sub = NA, dir = "two.sided") {
       mutate(absdiff = diff ^ 2) %>%
       summarize(sum = sum(absdiff),
                 n = n(),
-                m = mean(!!y_en))
+                m = mean(!!y_en),
+                .groups = "drop_last")
     sd_pooled <- sqrt((output2$sum[1] + output2$sum[2]) / (output2$n[1] + output2$n[2] - 2))
     d <- (output2$m[1] - output2$m[2]) / sd_pooled
     # variance = ((n1 + n2) / (n1 * n2) + d^2 / (2 * (n1 + n2 - 2))) * ((n1 + n2) / (n1 + n2 - 2))
@@ -51,14 +52,16 @@ ttest <- function(data, x, y, mu = NA, sub = NA, dir = "two.sided") {
       output2 <- data %>%
         summarize(m = mean(!!y_en),
                   sd = sd(!!y_en),
-                  n = n())
+                  n = n(),
+                  .groups = "drop_last")
     } else {
       # Independent one sample t-test: subgroup
       output2 <- data %>%
         filter(!!x_en == !!sub_en) %>%
         summarize(m = mean(!!y_en),
                   sd = sd(!!y_en),
-                  n = n())
+                  n = n(),
+                  .groups = "drop_last")
     }
     d <- (output2$m - mu) / output2$sd
     v <- 1 / output2$n + (d^2) / (2 * output2$n)
